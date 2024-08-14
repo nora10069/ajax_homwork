@@ -1,0 +1,103 @@
+﻿@{
+    ViewData["Title"] = "register";
+}
+
+<h1 class="mt-5">作業2</h1>
+<p>
+    利用Ajax 檢查帳號(姓名)是否重復
+</p>
+
+<div class="row">
+    <div class="col-3"></div>
+    <div class="col-6">
+        <form id="userForm">
+            <div class="mb-3">
+                <label for="inputName" class="form-label">姓名 :</label>
+                <input type="text" class="form-control" id="inputName" name="userName">
+                <div id="name_msg" class="alert   bd-yellow-100"></div>
+            </div>
+            <div class="mb-3">
+                <label for="inputEmail" class="form-label">電子郵件 :</label>
+                <input type="text" class="form-control" id="inputEmail" name="userEmail">
+            </div>
+            <div class="mb-3">
+                <label for="inputAge" class="form-label">年紀 :</label>
+                <input type="text" class="form-control" id="inputAge" name="userAge">
+            </div>
+           
+            <button type="submit" id="button1" class="btn btn-primary">送出</button>
+            <div id="name_msg" class="alert  alert-info "></div>
+        </form>
+
+
+        
+    </div>
+    <div class="col-3"></div>
+</div>
+
+
+
+@section Styles {
+    <style>
+
+        .bd-yellow-100{
+            color: #000;
+            background-color: #fff3cd;
+        }
+   
+
+    </style>
+}
+
+@section Scripts {
+    <script>
+
+
+        const name = document.querySelector('#inputName')
+        name.addEventListener('change', async () => {
+            event.preventDefault()
+
+            const api = '@Url.Content("~/api/CheckAccount_Action")';
+            const nameValue = name.value;
+ 
+
+                try {
+                    const response = await fetch(api, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    body: JSON.stringify(nameValue)
+                });
+
+                    // if (!response.ok) {
+                    //     throw new Error(`HTTP error! Status: ${response.status}`);
+                    // }
+                    // const data = await response.json();
+                const divInfo = document.querySelector('#name_msg');
+                if (response.ok) {
+                    const data = await response.json();
+                    divInfo.innerHTML = `<p class="m-0">${data}</p>`;
+                } else {
+                    const data = await response.text();
+                    divInfo.innerHTML = `<p class="m-0">${data}</p>`;
+                }
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    const divInfo = document.querySelector('#name_msg');
+                divInfo.innerHTML = `<p  class="m-0">Error: ${error.message}</p>`;
+                }
+               
+              
+
+              
+           
+        });
+
+
+
+        
+
+    </script>
+}

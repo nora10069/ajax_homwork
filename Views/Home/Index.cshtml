@@ -1,0 +1,53 @@
+﻿@{
+    ViewData["Title"] = "travel";
+}
+
+<h1 class="mt-5">作業1</h1>
+<p>
+    讀取travel.js 資料並顯示
+</p>
+<div class="row mb-3">
+
+</div>
+
+
+@section Styles {
+    <style>
+        li {
+            cursor: pointer
+        }
+    </style>
+}
+
+@section Scripts {
+
+    <script src="~/js/travel.js"></script>
+    <script>
+
+        const divSpots = document.querySelector('.row')
+        console.log(spots)
+
+
+        const spotscard = spots.CommonFormat.Section.map(spot => {
+
+            const imgSrc = spot.file?.img?.[0]?.text ?? spot.file?.img?.text ?? '';
+
+            const bodyText = spot.xbody.substring(0, 100);
+
+                return (`
+                      <div class=col-md-4>
+                           <div class="card mt-5">
+                                  <img src="${imgSrc}" class="card-img-top" alt="..."  style="height:260px">
+                                  <div class="card-body">
+                                        <h5 class="card-title">${spot.stitle}Card title</h5>
+                                        <p class="card-text">${bodyText}</p>
+                                   </div>
+                            </div>
+                      </div>
+                  `)
+            })
+
+            divSpots.innerHTML = spotscard.join("")
+
+    </script>
+}

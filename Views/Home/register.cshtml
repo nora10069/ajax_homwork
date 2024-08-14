@@ -1,0 +1,213 @@
+﻿
+@{
+    ViewData["Title"] = "register";
+}
+
+<h1 class="mt-5">作業3</h1>
+<p>
+    register 註冊
+</p>
+
+
+<div class="row">
+    <div class="col-3"></div>
+    <div class="col-6">
+        <form id="userForm">
+            <div class="mb-3">
+                <label for="inputName" class="form-label">姓名</label>
+                <input type="text" class="form-control" id="inputName" name="userName" >
+                <div id="name_msg" class=""></div>
+            </div>
+            <div class="mb-3">
+                <label for="inputEmail" class="form-label">電子郵件</label>
+                <input type="text" class="form-control" id="inputEmail" name="userEmail" >
+            </div>
+            <div class="mb-3">
+                <label for="inputPwd" class="form-label">密碼 :</label>
+                <input type="text" class="form-control" id="inputPwd" name="userPassword" >
+            </div>
+            <div class="mb-3">
+                <label for="inputPwdCheck" class="form-label">密碼確認 :</label>
+                <input type="text" class="form-control" id="inputPwdCheck" name="userPasswordCheck" >
+                <div id="pwd_msg" class="  bd-yellow-100"></div>
+            </div>
+            <div class="mb-3">
+                <label for="inputAge" class="form-label">年紀</label>
+                <input type="text" class="form-control" id="inputAge" name="userAge">
+            </div>
+            <div class="mb-3">
+                <label for="formFile" class="form-label">頭像</label>
+                <input class="form-control" type="file" id="formFile" name="userPhoto">
+                <img id="img1" class="mt-3 w-50 img-thumbnail" />
+            </div>
+            <button type="submit" id="button1" class="btn btn-primary">Click</button>
+        </form>
+        
+
+        <div id="div1" class="alert alert-info mt-3"></div>
+    </div>
+    <div class="col-3"></div>
+</div>
+
+
+
+@section Styles {
+    <style>
+        .bd-yellow-100 {
+            color: #000;
+            background-color: #fff3cd;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+
+        const name = document.querySelector('#inputName')
+        name.addEventListener('change', async () => {
+            event.preventDefault()
+            const api = '@Url.Content("~/api/CheckAccount_Action")';
+            const nameValue = name.value;
+
+            try {
+                const response = await fetch(api, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(nameValue)
+                });
+                const divInfo = document.querySelector('#name_msg');
+                if (response.ok) {
+                    const data = await response.json();                
+                    divInfo.innerHTML = `<p class="m-0"></p>`;
+                } else {
+                    const data = await response.text();
+                    divInfo.innerHTML = `<p class="m-0">${data}</p>`;
+                }
+
+                
+            } catch (error) {
+                console.error('Error:', error);
+                const divInfo = document.querySelector('#name_msg');
+                divInfo.innerHTML = `<p  class="m-0 alert   bd-yellow-100">Errsor: ${error.message}</p>`;
+            }
+        });
+
+        let sumitok = false;
+
+        const check_pwd = async () => {
+            const api = '@Url.Content("~/api/Check_PWD")';
+
+            const password = document.querySelector('#inputPwd').value;
+            const passwordCheck = CHECK.value;
+
+
+            try {
+                const response = await fetch(api, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        PWD: password,
+                        PWD_CHECK: passwordCheck
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.text();
+                    console.error('Error:123', error);
+                    sumitok = false;
+                    console.log("!ok",sumitok)
+                    throw new Error(error);
+                }
+
+                if (response.ok) {
+                    const divInfo = document.querySelector('#pwd_msg');
+                    divInfo.innerHTML = ``;
+                    
+                    sumitok = true;
+                    console.log("ok", sumitok)
+                }
+
+            } catch (error) {
+                console.error('Error:123', error);
+                const divInfo = document.querySelector('#pwd_msg');
+                divInfo.innerHTML = `<p>${error.message}</p>`;
+                sumitok = false;
+                console.log("error", sumitok)
+            }
+        }
+
+
+
+
+        const CHECK = document.querySelector('#inputPwdCheck')
+
+        CHECK.addEventListener('change', async() => {
+
+            check_pwd();
+      
+        })
+
+        const btn = document.querySelector('#button1')
+        const divInfo = document.querySelector('#div1')
+        const aFile = document.querySelector('#formFile')
+        const theImg = document.querySelector('#img1')
+
+        //預覽圖片
+        aFile.addEventListener('change', () => {
+           const theFile = aFile.files[0]
+           const reader = new FileReader()
+            reader.readAsDataURL(theFile)
+            reader.addEventListener('load', () => {
+                theImg.src = reader.result
+            })
+        })
+
+
+
+
+        btn.addEventListener('click', async (event) => {
+            event.preventDefault()
+            await check_pwd();
+
+            if (sumitok==false) 
+                return;
+            
+
+            alert("asd")
+            //FormData
+            const formData = new FormData(document.querySelector('#userForm'))
+
+        
+
+            try {
+                const api = '@Url.Content("~/api/register/")'
+                const response = await fetch(api, {
+                    method: 'POST',
+                    body: formData
+                })
+
+                // 檢查是否有效
+                if (response.ok) {
+                    const data = await response.text()
+                     divInfo.innerHTML = `<h3>${data}</h3>`
+                    alert("成功");
+                } else {
+                    const data = await response.text()
+                    divInfo.innerHTML = `<p>${data}</p>`
+                     alert("資料不全");
+                }
+            } catch (error) {
+                const data = await response.text()
+                divInfo.innerHTML = `<h3 style="color: red;">Error: ${error.message}</h3>`
+                
+            }
+        })
+            
+
+        
+    </script>
+}

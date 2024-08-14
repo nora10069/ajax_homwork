@@ -1,0 +1,211 @@
+﻿
+@{
+    ViewData["Title"] = "travel";
+}
+
+<h1 class="mt-5">作業3</h1>
+<p>
+    景點篩選顯示
+</p>
+
+<h1>台北市景點</h1>
+<div class="row mb-3">
+    <div class="col-3">
+        <select id="sel_pageSize" class="form-select" aria-label="Default select example">
+            <option value="6" >每頁 6 筆資料</option>
+            <option value="9" selected>每頁 9 筆資料</option>
+            <option value="12">每頁 12 筆資料</option>
+        </select>
+    </div>
+    <div class="col-3">
+        <nav aria-label="...">
+            <ul class="pagination pagination-sm" id="ul1">               
+            </ul>
+        </nav>
+    </div>
+    <div class="col-3">
+        <select id="sel_sortBy" class="form-select" aria-label="Default select example" >
+            <option value="categoryId_desc">分類編號降冪</option>
+            <option value="categoryId" selected>分類編號升冪</option>
+            <option value="SpotTitle_desc">景點標題降冪</option>
+            <option value="SpotTitle">景點標題升冪</option>
+            <option value="SpotId_desc">景點編號降冪</option>
+            <option value="SpotId">景點編號升冪</option>
+        </select>
+    </div>
+    <div class="col-3">
+        <input type="search" placeholder="搜尋景點" id="inputSearch" class="form-control" />
+    </div>
+</div>
+<div class="col-12">
+    <div class="btn-group" role="group" aria-label="Basic outlined example" style=" width: inherit;">
+    </div>
+</div>
+<div class="row row-cols-1 row-cols-md-3 g-4" id="div1">
+   
+</div>
+
+
+@section Styles {
+    <style>
+      li{
+          cursor:pointer
+      }
+
+      .p-rec{
+            padding: 15px 36px;
+            color: #6f6f6f;
+            border-color: #bfbfbf;
+            margin-bottom: 30px;
+        }
+
+    </style>
+}
+
+@section Scripts {
+    <script>
+        const searchData = {
+            "categoryId": 0,
+            "keyword": "",
+            "page": 1,
+            "pageSize": 9,
+            "sortType": "desc",
+            "sortBy": "categoryId"
+        }
+        const divSpots = document.querySelector('#div1')
+        const ulPage = document.querySelector('#ul1')
+        const inpSearch = document.querySelector('#inputSearch')
+        const selPageSize = document.querySelector('#sel_pageSize')
+        const selSortBy = document.querySelector('#sel_sortBy')
+
+        selSortBy.addEventListener('change', event => {
+            const selectedValue = event.target.value;
+            
+            console.log("Selected value:", selectedValue);
+
+            if (selectedValue.includes('_')) {
+                searchData.sortBy = selectedValue.split('_')[0];
+                searchData.sortType = 'desc'
+            } else {
+                searchData.sortBy = selectedValue;
+                searchData.sortType = 'asc'
+            }
+
+             loadSpots()
+        });
+
+        selPageSize.addEventListener('change', event => {
+            const selectedValue = event.target.value;
+            searchData.pageSize = selectedValue;
+            console.log("Selected value:", selectedValue);
+            loadSpots()
+        });
+
+
+        //關鍵字搜尋
+        inpSearch.addEventListener('keydown', event => {
+            if (event.which === 13) {
+                searchData.keyword = inpSearch.value
+                loadSpots()
+            }
+        })
+
+        function CategoryClick(categoryId) {
+            searchData.categoryId = categoryId;
+            searchData.page = 1;
+            loadSpots()
+        }
+
+        const selCate = document.querySelector('.btn-group');
+
+        (async () => {
+            const api = '@Url.Content("~/api/Categories")';
+            const response = await fetch(api);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+            const categories = await response.json();
+            const eleCategories = categories.map(c => `
+                 <button type="button" class="btn btn-outline-primary p-rec" onclick="CategoryClick(${c.categoryId})">${c.categoryName}</button>
+                `);
+            selCate.innerHTML = eleCategories.join("");
+   
+        })();
+
+        //載入景點資料
+        const loadSpots = async () => {
+            const api = '@Url.Content("~/api/spots")'
+            const response = await fetch(api, {
+                method:'POST',
+                body: JSON.stringify(searchData),
+                headers: {
+                    'Content-Type':'application/json'
+                }
+            })
+
+            const data = await response.json()
+            console.log(data)
+
+            //JSON 資料讀取及顯示
+            const spots = data.spotsResult.map(spot => {
+                const { address, spotTitle, spotDescription, spotImage, spotId } = spot
+                return(`
+                     <div class="col">
+                        <div class="card h-100">
+                                    <img src="${spotImage}" class="card-img-top img-th" alt="${spotTitle}" style="height: 275px;">
+                            <div class="card-body">
+                                <h5 class="card-title">${spotTitle}</h5>
+                                <p class="card-text">${spotDescription.length <= 100 ? spotDescription : spotDescription.substring(0,100)}...</p>
+                            </div>
+                            <div class="card-footer">
+                               <small class="text-body-secondary" > ${ address } </small>
+                            </div>
+                        </div>
+                    </div>
+
+                        `)
+            })
+
+            divSpots.innerHTML = spots.join("")
+
+            const maxVisiblePages = 7; 
+            const range = 3; 
+            const currentPage = searchData.page || 1; 
+
+            let liPages = "";
+
+            const startPage = Math.max(1, currentPage - range);
+            const endPage = Math.min(data.totalPages, currentPage + range);
+
+            if (data.totalPages > maxVisiblePages) {
+
+                for (let i = startPage; i <= endPage; i++) {
+                    const activeClass = (i === currentPage) ? 'active' : '';
+                    liPages += `<li class="page-item ${activeClass}" onclick="pagingHandler(${i})"><a class="page-link">${i}</a></li>`;
+                }
+            } else {
+                for (let i = 1; i <= data.totalPages; i++) {
+                    const activeClass = (i === currentPage) ? 'active' : '';
+                    liPages += `<li class="page-item ${activeClass}" onclick="pagingHandler(${i})"><a class="page-link">${i}</a></li>`;
+                }
+            }
+
+            ulPage.innerHTML = liPages;
+
+            
+        }
+
+
+
+        //分頁
+        const pagingHandler = page => {
+            searchData.page = page
+            // console.log("page", page)
+            loadSpots()
+     
+        }
+
+        loadSpots()
+    </script>
+}
